@@ -77,6 +77,15 @@ public class BasicTests extends CommonFixture {
 	String GET_STATUS_TEMPLATE_PATH = "/org/opengis/cite/wps20/examples/ValidGetStatus.xml";
 	String GET_RESULT_TEMPLATE_PATH = "/org/opengis/cite/wps20/examples/ValidGetResult.xml";
 
+    String echo_literalInputId = "";
+    String echo_complexInputId = "";
+    String echo_literalOutputId = "";
+    String echo_complexOutputId = "";
+    /*int echo_literalInputIndex = "";
+    int echo_complexInputIndex = "";
+    int echo_literalOutputIndex = "";
+    int echo_complexOutputIndex = "";*/
+        
 	/**
 	 * A.4.1. Verify that a given process description is in compliance with the
 Process XML encoding. Verify that the tested document fulfils all requirements listed in
@@ -167,7 +176,62 @@ req/native-process/xml-encoding/process.
 			Assert.assertTrue(HLCB_Flag, msg);
 		}
 	}
-	
+
+    protected void fetchDescribeProcess(){
+	String SERVICE_URL = this.ServiceUrl.toString();
+	String ECHO_PROCESS_ID = this.EchoProcessId;
+	// Parse the input id and output id in DescribeProcess
+	Map<String, Object> DP_Parameters = new LinkedHashMap<>();
+	DP_Parameters.put("Service", "WPS");
+	DP_Parameters.put("Version", "2.0.0");
+	DP_Parameters.put("Request", "DescribeProcess");
+	DP_Parameters.put("Identifier", ECHO_PROCESS_ID);
+	String responseDescribeProcess = GetContentFromGETKVPRequest(SERVICE_URL, DP_Parameters);
+	Document responseDescribeProcessDocument =  TransformXMLStringToXMLDocument(responseDescribeProcess);
+	// get input id
+	System.out.println("get input id");
+	NodeList inputList = responseDescribeProcessDocument.getElementsByTagNameNS("http://www.opengis.net/wps/2.0",
+										    "Input");
+	String literalInputId = "", literalOutputId = "", complexInputId = "", complexOutputId = "";
+	for (int i = 0; i < inputList.getLength(); i++) {
+	    Element element = (Element) inputList.item(i);
+	    Element literalInputElement = (Element) element
+		.getElementsByTagNameNS("http://www.opengis.net/wps/2.0", "LiteralData").item(0);
+	    Element complexInputElement = (Element) element
+		.getElementsByTagNameNS("http://www.opengis.net/wps/2.0", "ComplexData").item(0);
+	    String Id = element.getElementsByTagNameNS("http://www.opengis.net/ows/2.0", "Identifier").item(0)
+		.getTextContent();
+	    if (literalInputElement != null /*&& literalInputId == "" */) {
+		literalInputId = Id;
+		echo_literalInputId = Id;
+	    } else if (complexInputElement != null /* && complexInputId == "" */) {
+		complexInputId = Id;
+		echo_complexInputId = Id;
+	    }
+	}
+
+	// get output id
+	System.out.println("get output id");
+	NodeList outputList = responseDescribeProcessDocument.getElementsByTagNameNS("http://www.opengis.net/wps/2.0",
+										     "Output");
+	for (int i = 0; i < outputList.getLength(); i++) {
+	    Element element = (Element) outputList.item(i);
+	    Element literalOutputElement = (Element) element
+		.getElementsByTagNameNS("http://www.opengis.net/wps/2.0", "LiteralData").item(0);
+	    Element complexOutputElement = (Element) element
+		.getElementsByTagNameNS("http://www.opengis.net/wps/2.0", "ComplexData").item(0);
+	    String Id = element.getElementsByTagNameNS("http://www.opengis.net/ows/2.0", "Identifier").item(0)
+		.getTextContent();
+	    if (literalOutputElement != null) {
+		literalOutputId = Id;
+		echo_literalOutputId = Id;
+	    } else if (complexOutputElement != null) {
+		complexOutputId = Id;
+		echo_complexOutputId = Id;
+	    }
+	}
+    }
+    
 	/**
 	 * Precondition. Verify that the server can handle echo process
 	 * Flow of Test Description - Step 1: Send a valid DescribeProcess request to the server under test, setting the identifier to the echo process id. Verify that the server offers an echo process.
@@ -194,6 +258,7 @@ req/native-process/xml-encoding/process.
 		Document responseDescribeProcessDocument = TransformXMLStringToXMLDocument(responseDescribeProcess);
 
 		// get input id
+		System.out.println("get input id");
 		NodeList inputList = responseDescribeProcessDocument.getElementsByTagNameNS("http://www.opengis.net/wps/2.0",
 				"Input");
 		String literalInputId = "", literalOutputId = "", complexInputId = "", complexOutputId = "";
@@ -205,14 +270,17 @@ req/native-process/xml-encoding/process.
 					.getElementsByTagNameNS("http://www.opengis.net/wps/2.0", "ComplexData").item(0);
 			String Id = element.getElementsByTagNameNS("http://www.opengis.net/ows/2.0", "Identifier").item(0)
 					.getTextContent();
-			if (literalInputElement != null) {
+			if (literalInputElement != null /*&& literalInputId == "" */) {
 				literalInputId = Id;
-			} else if (complexInputElement != null) {
+				echo_literalInputId = Id;
+			} else if (complexInputElement != null /* && complexInputId == "" */) {
 				complexInputId = Id;
+				echo_complexInputId = Id;
 			}
 		}
 
 		// get output id
+		System.out.println("get output id");
 		NodeList outputList = responseDescribeProcessDocument.getElementsByTagNameNS("http://www.opengis.net/wps/2.0",
 				"Output");
 		for (int i = 0; i < outputList.getLength(); i++) {
@@ -225,12 +293,15 @@ req/native-process/xml-encoding/process.
 					.getTextContent();
 			if (literalOutputElement != null) {
 				literalOutputId = Id;
+				echo_literalOutputId = Id;
 			} else if (complexOutputElement != null) {
 				complexOutputId = Id;
+				echo_complexOutputId = Id;
 			}
 		}
 
 		// Test LiteralData
+		System.out.println("Test LiteralData");
 		Element requestInputElement = (Element) SEPDocument
 				.getElementsByTagNameNS("http://www.opengis.net/wps/2.0", "Input").item(0);
 		Element requestOutputElement = (Element) SEPDocument
@@ -238,16 +309,19 @@ req/native-process/xml-encoding/process.
 		Element requestIdElement = (Element) SEPDocument
 				.getElementsByTagNameNS("http://www.opengis.net/ows/2.0", "Identifier").item(0);
 		// replace id
+		System.out.println("replace id");
 		requestIdElement.setTextContent(ECHO_PROCESS_ID);
 		requestInputElement.setAttribute("id", literalInputId);
 		requestOutputElement.setAttribute("id", literalOutputId);
-//		prettyPrint(SEPDocument);
+		prettyPrint(SEPDocument);
 
 		String resultLiteral = GetContentFromPOSTXMLRequest(SERVICE_URL, SEPDocument);
 		String msgLiteral = "Echo Process LiteralData Test Failed";
 		// Check the response string is equal to hello_literal(hello_literal is defined
 		// in file from LITERAL_REQUEST_TEMPLATE_PATH)
+		System.out.println("Check the response string is equal to hello_literal");
 		Assert.assertTrue(resultLiteral.contains("hello_literal"), msgLiteral);
+		System.out.println("Check the response string is equal to hello_literal");
 
 		// Test ComplexData
 		URI uriComplexLiteralRequestTemplate = BasicTests.class.getResource(COMPLEX_REQUEST_TEMPLATE_PATH).toURI();
@@ -264,9 +338,13 @@ req/native-process/xml-encoding/process.
 		requestOutputElement.setAttribute("id", complexOutputId);
 		prettyPrint(SEPDocument);
 
+		
+
 		String responseComplex = GetContentFromPOSTXMLRequest(SERVICE_URL, SEPDocument);
 		Document complexOutputDocument = TransformXMLStringToXMLDocument(responseComplex);
 		String resultComplex = complexOutputDocument.getElementsByTagName("testElement").item(0).getTextContent();
+		System.out.println("Check the response string contains hello_literal");
+		System.out.println(resultComplex);
 		String msgComplex = "Echo Process ComplexData Test Failed";
 		// Check the string in testElement tag is equal to hello_complex(hello_complex
 		// is defined in file from COMPLEX_REQUEST_TEMPLATE_PATH)
@@ -358,11 +436,33 @@ req/native-process/xml-encoding/process.
 	@Test(enabled = true, groups = "A.5. Basic Tests", description = "A.5.3. Verify that the server correctly handles input data transmission by value.")
 	private void ValidInputDataTranmissionByValue() throws IOException, URISyntaxException, SAXException {
 		String SERVICE_URL = this.ServiceUrl.toString();
-
+		String ECHO_PROCESS_ID = this.EchoProcessId;
 		URI URIInputValueTemplate = BasicTests.class.getResource(INPUT_VALUE_TRANSMISSION_TEMPLATE_PATH).toURI();
+		System.out.println(" +++++++ ValidInputDataTranmissionByValue "+URIInputValueTemplate);
 		Document InputValueDocument = URIUtils.parseURI(URIInputValueTemplate);
+		fetchDescribeProcess();
+		// Test LiteralData
+		System.out.println("Test LiteralData");
+		Element requestInputElement = (Element) InputValueDocument
+				.getElementsByTagNameNS("http://www.opengis.net/wps/2.0", "Input").item(0);
+		Element requestOutputElement = (Element) InputValueDocument
+				.getElementsByTagNameNS("http://www.opengis.net/wps/2.0", "Output").item(0);
+		Element requestIdElement = (Element) InputValueDocument
+				.getElementsByTagNameNS("http://www.opengis.net/ows/2.0", "Identifier").item(0);
+		// replace id
+		System.out.println("replace id");
+		requestIdElement.setTextContent(ECHO_PROCESS_ID);
+		requestInputElement.setAttribute("id", echo_literalInputId);
+		requestOutputElement.setAttribute("id", echo_literalOutputId);
+		try {
+		    prettyPrint(InputValueDocument);
+		} catch (Exception e) {
+		    // TODO
+		    e.printStackTrace();
+		}
 
 		String InputValueResponse = GetContentFromPOSTXMLRequest(SERVICE_URL, InputValueDocument);
+		System.out.println(" +++++++ ValidInputDataTranmissionByValue "+InputValueResponse);
 		Document InputValueResponseDocument = TransformXMLStringToXMLDocument(InputValueResponse);
 		NodeList IVRD_List = InputValueResponseDocument.getElementsByTagNameNS("http://www.opengis.net/wps/2.0",
 				"Data");
@@ -390,13 +490,40 @@ req/native-process/xml-encoding/process.
 	@Test(enabled = true, groups = "A.5. Basic Tests", description = "A.5.4. Verify that the server correctly handles input data transmission by reference.")
 	private void ValidInputDataTranmissionByReference() throws IOException, URISyntaxException, SAXException {
 		String SERVICE_URL = this.ServiceUrl.toString();
+		String ECHO_PROCESS_ID = this.EchoProcessId;
+		System.out.println(" +++++++ ValidInputDataTranmissionByReference "+SERVICE_URL);
 
 		URI URIInputReferenceTemplate = BasicTests.class.getResource(INPUT_REFERENCE_TRANSMISSION_TEMPLATE_PATH)
 				.toURI();
+		System.out.println(" +++++++ ValidInputDataTranmissionByReference "+URIInputReferenceTemplate);
 		Document InputReferenceDocument = URIUtils.parseURI(URIInputReferenceTemplate);
+		System.out.println(" +++++++ ValidInputDataTranmissionByReference "+InputReferenceDocument);
+
+		fetchDescribeProcess();
+		// Test LiteralData
+		System.out.println("Test LiteralData");
+		Element requestInputElement = (Element) InputReferenceDocument
+				.getElementsByTagNameNS("http://www.opengis.net/wps/2.0", "Input").item(0);
+		Element requestOutputElement = (Element) InputReferenceDocument
+				.getElementsByTagNameNS("http://www.opengis.net/wps/2.0", "Output").item(0);
+		Element requestIdElement = (Element) InputReferenceDocument
+				.getElementsByTagNameNS("http://www.opengis.net/ows/2.0", "Identifier").item(0);
+		// replace id
+		System.out.println("replace id");
+		requestIdElement.setTextContent(ECHO_PROCESS_ID);
+		requestInputElement.setAttribute("id", echo_literalInputId);
+		requestOutputElement.setAttribute("id", echo_literalOutputId);
+		try {
+		    prettyPrint(InputReferenceDocument);
+		} catch (Exception e) {
+		    // TODO
+		    e.printStackTrace();
+		}
 
 		String InputReferenceResponse = GetContentFromPOSTXMLRequest(SERVICE_URL, InputReferenceDocument);
+		System.out.println(" +++++++ ValidInputDataTranmissionByReference "+InputReferenceResponse);
 		Document InputReferenceResponseDocument = TransformXMLStringToXMLDocument(InputReferenceResponse);
+		System.out.println(" +++++++ ValidInputDataTranmissionByReference "+InputReferenceResponseDocument);
 		NodeList IRRD_List = InputReferenceResponseDocument.getElementsByTagNameNS("http://www.opengis.net/wps/2.0",
 				"Result");
 		boolean IRRD_Flag = IRRD_List.getLength() > 0;
@@ -426,11 +553,32 @@ req/native-process/xml-encoding/process.
 	@Test(enabled = true, groups = "A.5. Basic Tests", description = "A.5.5. Verify that the server correctly handles output data transmission by value.")
 	private void ValidOutDataTranmissionByValue() throws IOException, URISyntaxException, SAXException {
 		String SERVICE_URL = this.ServiceUrl.toString();
-
+		String ECHO_PROCESS_ID = this.EchoProcessId;
 		URI URIOutputValueTemplate = BasicTests.class.getResource(OUTPUT_VALUE_TRANSMISSION_TEMPLATE_PATH).toURI();
 		Document OutputValueDocument = URIUtils.parseURI(URIOutputValueTemplate);
-
+		fetchDescribeProcess();
+		// Test LiteralData
+		System.out.println("Test LiteralData");
+		Element requestInputElement = (Element) OutputValueDocument
+				.getElementsByTagNameNS("http://www.opengis.net/wps/2.0", "Input").item(0);
+		Element requestOutputElement = (Element) OutputValueDocument
+				.getElementsByTagNameNS("http://www.opengis.net/wps/2.0", "Output").item(0);
+		Element requestIdElement = (Element) OutputValueDocument
+				.getElementsByTagNameNS("http://www.opengis.net/ows/2.0", "Identifier").item(0);
+		// replace id
+		System.out.println("replace id");
+		requestIdElement.setTextContent(ECHO_PROCESS_ID);
+		requestInputElement.setAttribute("id", echo_literalInputId);
+		requestOutputElement.setAttribute("id", echo_literalOutputId);
+		
+		try {
+		    prettyPrint(OutputValueDocument);
+		} catch (Exception e) {
+		    // TODO
+		    e.printStackTrace();
+		}
 		String OutputValueResponse = GetContentFromPOSTXMLRequest(SERVICE_URL, OutputValueDocument);
+		System.out.println(" +++++++ ValidOutDataTranmissionByValue "+OutputValueResponse);
 		Document OutputValueResponseDocument = TransformXMLStringToXMLDocument(OutputValueResponse);
 		NodeList OVRD_List = OutputValueResponseDocument.getElementsByTagNameNS("http://www.opengis.net/wps/2.0",
 				"Data");
@@ -461,12 +609,35 @@ req/native-process/xml-encoding/process.
 	@Test(enabled = true, groups = "A.5. Basic Tests", description = "A.5.6. Verify that the server correctly handles output data transmission by reference.")
 	private void ValidOutDataTranmissionByReference() throws IOException, URISyntaxException, SAXException {
 		String SERVICE_URL = this.ServiceUrl.toString();
-
+		String ECHO_PROCESS_ID = this.EchoProcessId;
 		URI URIOutputReferenceTemplate = BasicTests.class.getResource(OUTPUT_REFERENCE_TRANSMISSION_TEMPLATE_PATH)
 				.toURI();
 		Document OutputReferenceDocument = URIUtils.parseURI(URIOutputReferenceTemplate);
+		System.out.println(" +++++++ ValidOutDataTranmissionByReference "+OutputReferenceDocument);
+		fetchDescribeProcess();
+		// Test LiteralData
+		System.out.println("Test LiteralData");
+		Element requestInputElement = (Element) OutputReferenceDocument
+				.getElementsByTagNameNS("http://www.opengis.net/wps/2.0", "Input").item(0);
+		Element requestOutputElement = (Element) OutputReferenceDocument
+				.getElementsByTagNameNS("http://www.opengis.net/wps/2.0", "Output").item(0);
+		Element requestIdElement = (Element) OutputReferenceDocument
+				.getElementsByTagNameNS("http://www.opengis.net/ows/2.0", "Identifier").item(0);
+		// replace id
+		System.out.println("replace id");
+		requestIdElement.setTextContent(ECHO_PROCESS_ID);
+		requestInputElement.setAttribute("id", echo_literalInputId);
+		requestOutputElement.setAttribute("id", echo_literalOutputId);
+		requestOutputElement.setAttribute("transmission", "reference");
+		try {
+		    prettyPrint(OutputReferenceDocument);
+		} catch (Exception e) {
+		    // TODO
+		    e.printStackTrace();
+		}
 
 		String OutputReferenceResponse = GetContentFromPOSTXMLRequest(SERVICE_URL, OutputReferenceDocument);
+		System.out.println(" +++++++ ValidOutDataTranmissionByReference "+OutputReferenceResponse);
 		Document OutputReferenceResponseDocument = TransformXMLStringToXMLDocument(OutputReferenceResponse);
 		NodeList ORRD_List = OutputReferenceResponseDocument.getElementsByTagNameNS("http://www.opengis.net/wps/2.0",
 				"Reference");
@@ -552,6 +723,7 @@ req/native-process/xml-encoding/process.
 			String JName = UniqueJobIdsResponseDocument
 					.getElementsByTagNameNS("http://www.opengis.net/wps/2.0", "JobID").item(0).getTextContent();
 			if (JNameList.add(JName) == false) {
+			    System.out.println(" +-------+ NO OK: "+JName);
 				UJRD_Flag = false;
 				break;
 			}
@@ -998,9 +1170,11 @@ req/native-process/xml-encoding/process.
 			Data.append(URLEncoder.encode(String.valueOf(param.getValue()), "UTF-8"));
 		}
 		URL url = new URL(any_url + "?" + Data.toString());
+		System.out.println(url);
 		HttpURLConnection huc = (HttpURLConnection) url.openConnection();
 		huc.setRequestMethod("GET");
 		int responseCode = huc.getResponseCode();
+		System.out.println(responseCode);
 		return (responseCode != HttpURLConnection.HTTP_OK) ? false : true;
 	}
 

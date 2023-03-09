@@ -7,9 +7,7 @@
 	service="WPS" version="2.0.0" response="raw" mode="sync">
     <ows:Identifier>example.id</ows:Identifier>
 	<wps:Input id="example.input.id">
-        <wps:Data>
-            <wps:LiteralValue>hello_literal</wps:LiteralValue>
-        </wps:Data>
-    </wps:Input>
+          <wps:Data>hello_literal</wps:Data>
+	</wps:Input>
 	<wps:Output id="example.output.id" transmission="value" />
 </wps:Execute>

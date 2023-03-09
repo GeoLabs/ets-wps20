@@ -5,9 +5,7 @@
        version="2.0.0" response="document" mode="sync">
       <ows:Identifier>org.n52.javaps.test.EchoProcess</ows:Identifier>
       <wps:Input id="literalInput">
-            <wps:Data>
-            	<wps:LiteralValue>PASSED</wps:LiteralValue>
-            </wps:Data>
+            <wps:Data>PASSED</wps:Data>
       </wps:Input>
       <wps:Output id="literalOutput" transmission="value"/>
 </wps:Execute>

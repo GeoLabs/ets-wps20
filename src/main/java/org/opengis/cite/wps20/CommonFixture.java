@@ -166,7 +166,7 @@ public class CommonFixture {
 			Writer out = new StringWriter();
 			tf.transform(new DOMSource(xml_doc), new StreamResult(out));
 			byte[] postDataBytes = out.toString().getBytes("UTF-8");
-
+			System.out.println(" ---- GetContentFromPOSTXMLRequest 1:\n"+ out.toString());
 			URL url = new URL(any_url);
 			urlConn = (HttpURLConnection) url.openConnection();
 			urlConn.setRequestMethod("POST");
@@ -189,8 +189,12 @@ public class CommonFixture {
 			}
 			in.close();
 		} catch (Exception e) {
-			throw new RuntimeException("Exception while calling URL:" + any_url, e);
+		    System.out.println(" ---- GetContentFromPOSTXMLRequest ERROR.\n");
+		    e.printStackTrace();
+		    System.out.println(" ---- GetContentFromPOSTXMLRequest ERROR END.\n");
+		    throw new RuntimeException("Exception while calling URL:" + any_url + "\n" + e.toString(), e);
 		}
+		System.out.println(" ---- GetContentFromPOSTXMLRequest 2:\n"+sb.toString());
 		return sb.toString();
 	}
 	/**
@@ -253,7 +257,7 @@ public class CommonFixture {
 			throw new RuntimeException("Exception while calling URL:" + any_url, e);
 		}
 		return sb.toString();
-	}	    
+	}
 	/**
 	 * @param URI
 	 * @return
